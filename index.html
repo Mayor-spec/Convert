@@ -3,217 +3,208 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SlideGen | Cyber-Noir Edition</title>
+    <title>SlideGen AI | Cyber-Noir</title>
     
-    <!-- External Libraries -->
+    <!-- Libraries -->
     <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    
+    <!-- Google Generative AI SDK -->
+    <script type="importmap">
+      {
+        "imports": {
+          "@google/generative-ai": "https://esm.run/@google/generative-ai"
+        }
+      }
+    </script>
 
     <style>
         :root {
-            --bg: #0a0a0a;
-            --card: #141414;
+            --bg: #080808;
+            --card: #121212;
             --accent: #00f2ff;
-            --text: #e0e0e0;
-            --dim: #666;
-            --border: #222;
+            --text: #ececec;
+            --dim: #555;
+            --border: #1f1f1f;
         }
-
-        * { box-sizing: border-box; }
 
         body {
             background-color: var(--bg);
             color: var(--text);
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Inter', sans-serif;
             margin: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
+            overflow: hidden;
         }
 
-        /* Bento Grid Layout */
         .container {
             display: grid;
-            grid-template-columns: 1.5fr 1fr;
+            grid-template-columns: 1.2fr 0.8fr;
             grid-template-rows: auto 1fr auto;
-            gap: 20px;
-            width: 90vw;
-            max-width: 1200px;
-            height: 85vh;
+            gap: 15px;
+            width: 95vw;
+            max-width: 1100px;
+            height: 90vh;
         }
 
         .card {
             background: var(--card);
             border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 24px;
+            border-radius: 12px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
         }
 
-        /* Header Area */
-        .header {
-            grid-column: span 2;
-            padding: 15px 24px;
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: center;
-        }
+        .header { grid-column: span 2; flex-direction: row; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent); }
+        h1 { font-size: 1rem; letter-spacing: 4px; margin: 0; color: var(--accent); }
 
-        h1 { font-size: 1.2rem; letter-spacing: 3px; color: var(--accent); margin: 0; }
-
-        /* Input Area */
         .input-box { grid-row: span 2; }
-
         textarea {
             flex-grow: 1;
             background: transparent;
-            border: none;
+            border: 1px solid #222;
+            border-radius: 8px;
             color: var(--text);
             font-family: 'Fira Code', monospace;
-            font-size: 1rem;
+            padding: 15px;
             resize: none;
             outline: none;
-            margin-top: 15px;
-            line-height: 1.6;
+            margin-top: 10px;
         }
 
-        /* Controls Area */
         .controls { gap: 15px; }
-
-        .btn-group { display: flex; flex-direction: column; gap: 10px; }
-
-        label, button {
-            padding: 14px;
-            border-radius: 12px;
-            font-weight: 700;
+        button, .file-label {
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: bold;
             cursor: pointer;
             text-align: center;
-            transition: 0.3s;
-            font-size: 0.9rem;
+            transition: 0.2s;
             border: none;
+            text-transform: uppercase;
+            font-size: 0.8rem;
         }
 
-        #generateBtn {
-            background: var(--accent);
-            color: #000;
-        }
+        #genBtn { background: var(--accent); color: #000; }
+        #genBtn:disabled { background: #333; color: #666; cursor: not-allowed; }
+        .file-label { background: #222; color: var(--text); border: 1px solid var(--dim); }
 
-        #generateBtn:hover { box-shadow: 0 0 20px rgba(0, 242, 255, 0.4); }
-
-        .file-upload {
-            background: #222;
-            color: var(--text);
-            border: 1px dashed var(--dim);
-        }
-
-        /* Status & Labels */
-        .label-text { font-size: 0.7rem; text-transform: uppercase; color: var(--dim); letter-spacing: 1px; }
-        #status { font-size: 0.8rem; color: var(--accent); margin-top: 10px; }
+        .label-text { font-size: 0.65rem; color: var(--dim); letter-spacing: 1px; }
+        #status { font-family: monospace; font-size: 0.75rem; color: var(--accent); }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <!-- Section 1: Top Bar -->
         <div class="card header">
-            <h1>SLIDE_GEN.EXE</h1>
-            <div id="status">// SYSTEM_READY</div>
+            <h1>NEURAL_SLIDE_v1.0</h1>
+            <div id="status">SYS_IDLE</div>
         </div>
 
-        <!-- Section 2: Text Input -->
         <div class="card input-box">
-            <span class="label-text">Source Content</span>
-            <textarea id="textInput" placeholder="Paste your text here or upload a file..."></textarea>
+            <span class="label-text">INPUT_STREAM</span>
+            <textarea id="textInput" placeholder="Paste document content or raw notes..."></textarea>
         </div>
 
-        <!-- Section 3: Tools -->
         <div class="card controls">
-            <span class="label-text">Command Center</span>
-            <div class="btn-group">
-                <label class="file-upload">
-                    UPLOAD .DOCX
-                    <input type="file" id="filePicker" accept=".docx" style="display:none">
-                </label>
-                <button id="generateBtn">BUILD PRESENTATION</button>
-            </div>
-            <p style="color: var(--dim); font-size: 0.75rem; line-height: 1.4;">
-                Separating paragraphs with a double line break creates a new slide.
-            </p>
+            <span class="label-text">CORE_FUNCTIONS</span>
+            <label class="file-label">
+                IMPORT_DOCX
+                <input type="file" id="filePicker" accept=".docx" style="display:none">
+            </label>
+            <button id="genBtn">PROCESS & EXPORT</button>
+            <p style="color: var(--dim); font-size: 0.7rem;">AI will automatically identify key points and structure them into slides.</p>
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import { GoogleGenerativeAI } from "@google/generative-ai";
+
+        // Your API Key
+        const API_KEY = "AIzaSyDmjZ5rMAugOyMVEUussxBcYjNxF-CRAEU";
+        const genAI = new GoogleGenerativeAI(API_KEY);
+
         const textInput = document.getElementById('textInput');
-        const generateBtn = document.getElementById('generateBtn');
+        const genBtn = document.getElementById('genBtn');
         const filePicker = document.getElementById('filePicker');
         const status = document.getElementById('status');
 
-        // 1. Handle Word Document Upload
+        // 1. Docx Parser
         filePicker.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
-
-            status.innerText = "// READING_FILE...";
+            status.innerText = "PARSING_FILE...";
             const reader = new FileReader();
-            
             reader.onload = (event) => {
                 mammoth.convertToPlaintext({ arrayBuffer: event.target.result })
                     .then(result => {
                         textInput.value = result.value;
-                        status.innerText = "// IMPORT_SUCCESSFUL";
-                    })
-                    .catch(err => {
-                        status.innerText = "// ERROR_READING_DOCX";
-                        console.error(err);
+                        status.innerText = "IMPORT_COMPLETE";
                     });
             };
             reader.readAsArrayBuffer(file);
         });
 
-        // 2. Build and Download PowerPoint
-        generateBtn.addEventListener('click', () => {
-            const content = textInput.value.trim();
-            if (!content) {
-                status.innerText = "// ERROR: NO_CONTENT";
-                return;
-            }
-
-            status.innerText = "// COMPILING_SLIDES...";
+        // 2. The AI Magic
+        async function getAISummary(inputText) {
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
             
-            const pres = new PptxGenJS();
-            pres.layout = 'LAYOUT_16x9';
+            const prompt = `
+                Analyze the following text and convert it into a presentation outline. 
+                Return the result ONLY as a JSON array of objects. 
+                Each object must have a "title" and "bullets" (an array of strings).
+                Limit to a maximum of 8 slides.
+                
+                Text: ${inputText}
+            `;
 
-            // Logic: Split by double newline to simulate "AI Segments"
-            const segments = content.split('\n\n').filter(s => s.trim() !== "");
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            let text = response.text();
+            
+            // Clean AI response in case it wraps it in markdown code blocks
+            return JSON.parse(text.replace(/```json|```/g, ""));
+        }
 
-            segments.forEach((chunk, index) => {
-                const slide = pres.addSlide();
-                slide.background = { fill: "0a0a0a" }; // Match app background
+        // 3. Build PPTX
+        genBtn.addEventListener('click', async () => {
+            const content = textInput.value.trim();
+            if (!content) return;
 
-                // Slide Title
-                slide.addText(`SEGMENT_${index + 1}`, {
-                    x: 0.5, y: 0.5, w: '90%',
-                    fontSize: 24, color: '00f2ff', 
-                    bold: true, fontFace: 'Courier New'
+            genBtn.disabled = true;
+            status.innerText = "AI_THINKING...";
+
+            try {
+                const slidesData = await getAISummary(content);
+                status.innerText = "BUILDING_PPTX...";
+
+                const pres = new PptxGenJS();
+                
+                slidesData.forEach((data) => {
+                    const slide = pres.addSlide();
+                    slide.background = { fill: "080808" };
+
+                    slide.addText(data.title.toUpperCase(), {
+                        x: 0.5, y: 0.5, w: '90%', fontSize: 24, color: '00f2ff', bold: true, fontFace: 'Verdana'
+                    });
+
+                    slide.addText(data.bullets.map(b => `• ${b}`).join('\n'), {
+                        x: 0.5, y: 1.5, w: '90%', h: '60%', fontSize: 16, color: 'ececec', valign: 'top', lineSpacing: 28
+                    });
                 });
 
-                // Slide Content
-                slide.addText(chunk, {
-                    x: 0.5, y: 1.5, w: '90%', h: '60%',
-                    fontSize: 18, color: 'e0e0e0',
-                    valign: 'top', fontFace: 'Arial'
-                });
-            });
-
-            pres.writeFile({ fileName: `Project_Slides_${Date.now()}.pptx` })
-                .then(() => {
-                    status.innerText = "// EXPORT_COMPLETE";
-                })
-                .catch(() => {
-                    status.innerText = "// EXPORT_FAILED";
-                });
+                await pres.writeFile({ fileName: "AI_Summary.pptx" });
+                status.innerText = "PROCESS_COMPLETE";
+            } catch (error) {
+                console.error(error);
+                status.innerText = "AI_ERROR_RETRY";
+            } finally {
+                genBtn.disabled = false;
+            }
         });
     </script>
 </body>
